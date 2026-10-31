@@ -1,0 +1,8 @@
+services:
+  hai-dang-sos:
+    build: .
+    image: hai-dang-sos:latest
+    container_name: hai-dang-sos
+    restart: unless-stopped
+    ports:
+      - "8090:80"

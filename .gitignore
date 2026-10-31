@@ -1,0 +1,22 @@
+node_modules
+dist
+dev-dist
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Theo .agents/rules/vcs.md
+build/
+.next/
+.astro/
+.vercel/
+.wrangler/
+*.local
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
