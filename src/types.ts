@@ -39,7 +39,8 @@ export interface Place {
   id: string
   name: string
   category: CategoryId
-  phone: string
+  /** Chưa có thì app chỉ cho chỉ đường, không có nút gọi */
+  phone?: string
   lat: number
   lng: number
   address?: string
@@ -47,6 +48,8 @@ export interface Place {
   hours?: string
   note?: string
   verified?: boolean
+  /** Nguồn dữ liệu, ví dụ "osm". Có nguồn mà chưa có verifiedAt nghĩa là chưa gọi xác minh */
+  source?: string
   /** Ngày gọi xác minh gần nhất, YYYY-MM-DD */
   verifiedAt?: string
   /** true = thợ đến tận nơi */

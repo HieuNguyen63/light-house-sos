@@ -18,10 +18,15 @@ const CLOSING_SOON_MINUTES = 30
 export function statusText(place: NearbyPlace): string {
   const parts = hoursParts(place.hours)
   if (place.status === 'always') return 'Mở 24/7'
-  if (place.status === 'unknown') return 'Chưa rõ giờ, nên gọi trước'
+  if (place.status === 'unknown') return place.phone ? 'Chưa rõ giờ, nên gọi trước' : 'Chưa rõ giờ'
   if (place.status === 'closed') return `Đã nghỉ · mở lại ${parts?.opens}`
   if (place.closingIn != null && place.closingIn <= CLOSING_SOON_MINUTES) return `Sắp nghỉ · còn ${place.closingIn} phút`
   return `Mở đến ${parts?.closes}`
+}
+
+/** Lấy từ nguồn ngoài mà chưa có người gọi kiểm tra. */
+export function isUnverified(place: NearbyPlace): boolean {
+  return Boolean(place.source) && !place.verifiedAt
 }
 
 export function statusColor(place: NearbyPlace): string {
@@ -144,7 +149,7 @@ export const PlaceCard = memo(function PlaceCard({ place, selected, onSelect, on
           </span>
         </button>
         {!off && <div className="flex shrink-0 flex-col gap-2">
-          <a
+          {place.phone && <a
             href={telHref(place.phone)}
             onClick={e => blockSampleCall(e, place.sample)}
             className="flex h-12 items-center gap-1.5 rounded-xl bg-cta px-3 text-sm font-bold text-ink active:bg-cta-hover"
@@ -152,7 +157,7 @@ export const PlaceCard = memo(function PlaceCard({ place, selected, onSelect, on
           >
             <PhoneIcon size={18} strokeWidth={2.4} />
             Gọi
-          </a>
+          </a>}
           <a
             href={mapsUrl(place)}
             target="_blank"
@@ -165,9 +170,10 @@ export const PlaceCard = memo(function PlaceCard({ place, selected, onSelect, on
           </a>
         </div>}
       </div>
-      {(place.sample || place.mobile || place.verifiedAt || place.vehicles) && (
+      {(place.sample || place.mobile || place.verifiedAt || place.vehicles || isUnverified(place)) && (
         <p className="mt-2 flex flex-wrap gap-1.5 pl-[52px] text-xs font-semibold">
           {place.sample && <span className="rounded border border-accent px-1.5 py-0.5 uppercase text-accent">Mẫu</span>}
+          {isUnverified(place) && <span className="rounded bg-soft px-1.5 py-0.5 text-muted">Chưa xác minh</span>}
           {place.mobile && <span className="rounded bg-ok-soft px-1.5 py-0.5 text-ok">Đến tận nơi</span>}
           {place.vehicles?.map(v => (
             <span key={v} className="rounded bg-soft px-1.5 py-0.5 text-muted">{VEHICLE_LABEL[v]}</span>

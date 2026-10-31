@@ -52,7 +52,6 @@ export function PlaceForm({ title, submitLabel, initial, onSubmit, onClose }: Pr
 
   const validate = (): string | null => {
     if (!name.trim()) return 'Chưa nhập tên.'
-    if (!phone.trim()) return 'Chưa nhập số điện thoại.'
     if (hours.trim() && !HOURS_PATTERN.test(hours.trim())) return 'Giờ làm phải ghi dạng 18:00-02:00 hoặc 24/7. Sai dạng thì tiệm không tự off được.'
     if (!location) return 'Chưa chọn vị trí trên bản đồ.'
     if (prices.some(p => p.price.trim() && !/^\d+$/.test(p.price.trim()))) return 'Đơn giá chỉ ghi số, ví dụ 30000. Miễn phí ghi 0, chưa rõ giá thì để trống.'
@@ -79,7 +78,7 @@ export function PlaceForm({ title, submitLabel, initial, onSubmit, onClose }: Pr
         id: initial.id ?? `d-${Date.now().toString(36)}`,
         name: name.trim(),
         category,
-        phone: phone.trim(),
+        phone: phone.trim() || undefined,
         lat: location!.lat,
         lng: location!.lng,
         address: address.trim() || undefined,
@@ -124,7 +123,7 @@ export function PlaceForm({ title, submitLabel, initial, onSubmit, onClose }: Pr
           </select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm font-semibold">Số điện thoại</span>
+          <span className="mb-1 block text-sm font-semibold">Số điện thoại, chưa có thì để trống</span>
           <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} maxLength={30} autoComplete="off" className={INPUT} />
         </label>
         <label className="block">

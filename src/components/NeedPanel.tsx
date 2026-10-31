@@ -4,7 +4,7 @@ import { blockSampleCall, formatDistance, formatPrice, mapsUrl, telHref, walkMin
 import { mapsNearbyUrl } from '../lib/mapLink'
 import type { GeoStatus } from '../lib/useGeolocation'
 import { CategoryIcon, ChatIcon, ChevronIcon, PhoneIcon, RouteIcon } from './icons'
-import { PlaceDetails, statusColor, statusText } from './PlaceCard'
+import { isUnverified, PlaceDetails, statusColor, statusText } from './PlaceCard'
 import type { FeedbackEntry, LatLng, NearbyPlace } from '../types'
 
 const CARD = 'rounded-2xl border border-line bg-surface'
@@ -259,8 +259,9 @@ function HeroCard({ place, need, geoStatus, feedback, onFeedback }: { place: Nea
   return (
     <article data-hero={place.id} className="rounded-2xl border-2 border-cta bg-surface p-4">
       <p className="text-xs font-bold tracking-wide text-accent uppercase">
-        {need.hotline ? `Nếu chưa gọi được ${need.hotline.number}` : geoStatus === 'ok' ? 'Nên gọi trước' : 'Đang mở'}
+        {need.hotline ? `Nếu chưa gọi được ${need.hotline.number}` : geoStatus === 'ok' ? (place.phone ? 'Nên gọi trước' : 'Nên đến trước') : 'Đang mở'}
         {place.sample && <span className="ml-2 rounded border border-accent px-1 py-px">Mẫu</span>}
+        {isUnverified(place) && <span className="ml-2 rounded bg-soft px-1 py-px text-muted normal-case">Chưa xác minh</span>}
       </p>
       <h3 className="mt-0.5 text-xl leading-snug font-black">{place.name}</h3>
       <p className="mt-1 text-base">
@@ -270,18 +271,25 @@ function HeroCard({ place, need, geoStatus, feedback, onFeedback }: { place: Nea
       <p className={`text-base font-semibold ${statusColor(place)}`}>{statusText(place)}</p>
       {place.mobile && <p className="mt-1 inline-block rounded bg-ok-soft px-1.5 py-0.5 text-sm font-semibold text-ok">Thợ đến tận nơi</p>}
 
-      <a
-        href={telHref(place.phone)}
-        onClick={e => blockSampleCall(e, place.sample)}
-        aria-label={`Gọi ${place.name}`}
-        className="mt-3 flex h-16 items-center justify-center gap-3 rounded-2xl bg-cta text-ink active:bg-cta-hover"
-      >
-        <PhoneIcon size={24} strokeWidth={2.4} />
-        <span className="text-left leading-tight">
-          <span className="block text-lg font-black">Gọi ngay</span>
-          <span className="block text-sm font-semibold tabular-nums">{place.phone}</span>
-        </span>
-      </a>
+      {place.phone ? (
+        <a
+          href={telHref(place.phone)}
+          onClick={e => blockSampleCall(e, place.sample)}
+          aria-label={`Gọi ${place.name}`}
+          className="mt-3 flex h-16 items-center justify-center gap-3 rounded-2xl bg-cta text-ink active:bg-cta-hover"
+        >
+          <PhoneIcon size={24} strokeWidth={2.4} />
+          <span className="text-left leading-tight">
+            <span className="block text-lg font-black">Gọi ngay</span>
+            <span className="block text-sm font-semibold tabular-nums">{place.phone}</span>
+          </span>
+        </a>
+      ) : (
+        <a href={mapsUrl(place)} target="_blank" rel="noopener" aria-label={`Chỉ đường tới ${place.name}`} className="mt-3 flex h-16 items-center justify-center gap-3 rounded-2xl bg-cta text-lg font-black text-ink active:bg-cta-hover">
+          <RouteIcon size={22} />
+          Chỉ đường
+        </a>
+      )}
       {(price || place.rating != null) && (
         <p className="mt-2 text-sm text-muted">
           {price && (
@@ -293,11 +301,13 @@ function HeroCard({ place, need, geoStatus, feedback, onFeedback }: { place: Nea
           {place.rating != null && <b className="text-accent">★ {place.rating.toFixed(1).replace('.', ',')}</b>}
         </p>
       )}
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <a href={mapsUrl(place)} target="_blank" rel="noopener" aria-label={`Chỉ đường tới ${place.name}`} className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-line text-sm font-bold active:bg-soft">
-          <RouteIcon size={18} />
-          Chỉ đường
-        </a>
+      <div className={`mt-2 grid gap-2 ${place.phone ? 'grid-cols-2' : ''}`}>
+        {place.phone && (
+          <a href={mapsUrl(place)} target="_blank" rel="noopener" aria-label={`Chỉ đường tới ${place.name}`} className="flex h-12 items-center justify-center gap-1.5 rounded-xl border border-line text-sm font-bold active:bg-soft">
+            <RouteIcon size={18} />
+            Chỉ đường
+          </a>
+        )}
         <button type="button" onClick={() => setDetails(v => !v)} aria-expanded={details} className="flex h-12 items-center justify-center gap-1 rounded-xl border border-line text-sm font-bold active:bg-soft">
           {details ? 'Thu gọn' : 'Giá, đánh giá'}
           <ChevronIcon up={details} size={16} />
@@ -327,15 +337,22 @@ function OtherRow({ place, onSelect }: { place: NearbyPlace; onSelect: (id: stri
         </span>
         {place.mobile && <span className="block text-sm font-semibold text-ok">Thợ đến tận nơi</span>}
       </button>
-      <a
-        href={telHref(place.phone)}
-        onClick={e => blockSampleCall(e, place.sample)}
-        aria-label={`Gọi ${place.name}`}
-        className="flex h-12 shrink-0 items-center gap-1.5 rounded-xl bg-cta px-3 text-sm font-bold text-ink active:bg-cta-hover"
-      >
-        <PhoneIcon size={18} strokeWidth={2.4} />
-        Gọi
-      </a>
+      {place.phone ? (
+        <a
+          href={telHref(place.phone)}
+          onClick={e => blockSampleCall(e, place.sample)}
+          aria-label={`Gọi ${place.name}`}
+          className="flex h-12 shrink-0 items-center gap-1.5 rounded-xl bg-cta px-3 text-sm font-bold text-ink active:bg-cta-hover"
+        >
+          <PhoneIcon size={18} strokeWidth={2.4} />
+          Gọi
+        </a>
+      ) : (
+        <a href={mapsUrl(place)} target="_blank" rel="noopener" aria-label={`Chỉ đường tới ${place.name}`} className="flex h-12 shrink-0 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-bold active:bg-soft">
+          <RouteIcon size={18} />
+          Đường đi
+        </a>
+      )}
     </li>
   )
 }

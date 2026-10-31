@@ -200,7 +200,7 @@ export default function AdminPage() {
 
   const shownPlaces = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return q ? places.filter(p => `${p.name} ${p.phone} ${p.address ?? ''}`.toLowerCase().includes(q)) : places
+    return q ? places.filter(p => `${p.name} ${p.phone ?? ''} ${p.address ?? ''}`.toLowerCase().includes(q)) : places
   }, [places, search])
 
   return (
@@ -272,9 +272,10 @@ export default function AdminPage() {
                         {place.name}
                         {!place.active && <span className="ml-2 rounded bg-line px-1.5 py-0.5 text-xs">Đang ẩn</span>}
                         {place.sample && <span className="ml-2 rounded border border-accent px-1.5 py-0.5 text-xs uppercase text-accent">Mẫu</span>}
+                        {place.source && !place.verifiedAt && <span className="ml-2 rounded bg-soft px-1.5 py-0.5 text-xs text-muted">Chưa xác minh</span>}
                       </p>
                       <p className="text-muted">
-                        {CATEGORIES[place.category]?.label} · {place.phone} · {place.hours ?? 'Chưa rõ giờ'}
+                        {CATEGORIES[place.category]?.label} · {place.phone ?? 'Chưa có số'} · {place.hours ?? 'Chưa rõ giờ'}
                       </p>
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         <button type="button" onClick={() => setForm({ mode: 'edit', place })} className="h-11 rounded-xl border border-line font-semibold active:bg-soft">
@@ -316,7 +317,9 @@ export default function AdminPage() {
                             <p className="mb-1 text-xs font-bold uppercase tracking-wide text-muted">Đang hiện trên app</p>
                             <p>
                               Điện thoại:{' '}
-                              {place.sample ? (
+                              {!place.phone ? (
+                                'Chưa có'
+                              ) : place.sample ? (
                                 `${place.phone} (số mẫu)`
                               ) : (
                                 <a href={telHref(place.phone)} className="font-semibold text-accent underline">

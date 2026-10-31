@@ -108,7 +108,7 @@ interface PlaceRow {
   id: string
   name: string
   category: CategoryId
-  phone: string
+  phone: string | null
   lat: number
   lng: number
   address: string | null
@@ -123,6 +123,7 @@ interface PlaceRow {
   reviews: Review[] | null
   sample: boolean
   active: boolean
+  source: string | null
 }
 
 export interface AdminPlace extends Place {
@@ -134,7 +135,7 @@ function fromRow(r: PlaceRow): AdminPlace {
     id: r.id,
     name: r.name,
     category: r.category,
-    phone: r.phone,
+    phone: r.phone ?? undefined,
     lat: r.lat,
     lng: r.lng,
     address: r.address ?? undefined,
@@ -149,6 +150,7 @@ function fromRow(r: PlaceRow): AdminPlace {
     ratingCount: r.rating_count ?? undefined,
     reviews: r.reviews ?? undefined,
     sample: r.sample || undefined,
+    source: r.source ?? undefined,
     active: r.active,
   }
 }
@@ -158,7 +160,7 @@ function toRow(p: Place) {
     id: p.id,
     name: p.name,
     category: p.category,
-    phone: p.phone,
+    phone: p.phone ?? null,
     lat: p.lat,
     lng: p.lng,
     address: p.address ?? null,
@@ -172,7 +174,7 @@ function toRow(p: Place) {
   }
 }
 
-const PUBLIC_PLACE_COLUMNS = 'id,name,category,phone,lat,lng,address,hours,note,verified_at,mobile,vehicles,prices,rating,rating_count,reviews,sample,active'
+const PUBLIC_PLACE_COLUMNS = 'id,name,category,phone,lat,lng,address,hours,note,verified_at,mobile,vehicles,prices,rating,rating_count,reviews,sample,active,source'
 
 export async function fetchPlaces(): Promise<Place[]> {
   const res = await check(await fetch(`${BASE}/rest/v1/places?select=${PUBLIC_PLACE_COLUMNS}&active=eq.true`, { headers: headers() }))

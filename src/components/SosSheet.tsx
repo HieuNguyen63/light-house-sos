@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { APP, CATEGORIES, HOTLINES, LOCAL_HOTLINES, type Hotline } from '../config'
-import { blockSampleCall, formatDistance, pointUrl, telHref } from '../lib/geo'
+import { blockSampleCall, formatDistance, mapsUrl, pointUrl, telHref } from '../lib/geo'
 import type { GeoStatus } from '../lib/useGeolocation'
 import { CategoryIcon, CloseIcon, LocateIcon, PhoneIcon, ShareIcon } from './icons'
 import type { NearbyPlace, UserPosition } from '../types'
@@ -179,15 +179,21 @@ export function SosSheet({ open, onClose, user, geoStatus, onLocate, nearest }: 
                       {p.distance != null && ` · ${formatDistance(p.distance)}`}
                     </span>
                   </span>
-                  <a
-                    href={telHref(p.phone)}
-                    onClick={e => blockSampleCall(e, p.sample)}
-                    className="flex h-12 items-center gap-1.5 rounded-xl bg-cta px-3 text-sm font-bold text-ink"
-                    aria-label={`Gọi ${p.name}`}
-                  >
-                    <PhoneIcon size={18} strokeWidth={2.4} />
-                    Gọi
-                  </a>
+                  {p.phone ? (
+                    <a
+                      href={telHref(p.phone)}
+                      onClick={e => blockSampleCall(e, p.sample)}
+                      className="flex h-12 items-center gap-1.5 rounded-xl bg-cta px-3 text-sm font-bold text-ink"
+                      aria-label={`Gọi ${p.name}`}
+                    >
+                      <PhoneIcon size={18} strokeWidth={2.4} />
+                      Gọi
+                    </a>
+                  ) : (
+                    <a href={mapsUrl(p)} target="_blank" rel="noopener" className="flex h-12 items-center gap-1.5 rounded-xl border border-line px-3 text-sm font-bold" aria-label={`Chỉ đường tới ${p.name}`}>
+                      Đường đi
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

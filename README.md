@@ -51,7 +51,7 @@ npm run preview    # xem bản build tại http://localhost:4173
 
 App dùng được trên toàn quốc: mở lên là định vị người dùng. Chỉ gợi ý nơi trong bán kính 30 km; khu vực chưa có dữ liệu thì mở tìm kiếm Google Maps quanh vị trí đó. Thêm `?demo=22:30` vào link để giả lập giờ đó và đứng ở trung tâm Quy Nhơn, nơi có dữ liệu mẫu. Ví dụ `http://localhost:5173/?demo=02:30` để xem cảnh hầu hết tiệm đã off.
 
-Dữ liệu đi kèm repo hiện là **dữ liệu mẫu**, số điện thoại không có thật.
+Dữ liệu vị trí và tên trong `public/data/locations.json` và `supabase/005-osm-places.sql` lấy từ OpenStreetMap (© OpenStreetMap contributors, ODbL), chưa gọi xác minh.
 
 ## Góp ý cộng đồng
 
@@ -61,7 +61,7 @@ Góp ý lưu trên máy trước, rồi gửi lên Supabase; mất mạng thì t
 
 Cài cho địa phương của bạn:
 
-1. Tạo dự án Supabase, chạy lần lượt `supabase/001-feedback.sql`, `003-places.sql`, `004-security.sql` trong SQL Editor.
+1. Tạo dự án Supabase, chạy lần lượt `supabase/001-feedback.sql`, `003-places.sql`, `004-security.sql`, `005-osm-places.sql` trong SQL Editor.
 2. Chép `.env.example` thành `.env.local`, điền Project URL và Publishable key. Không dùng Secret key.
 3. Tạo tài khoản người duyệt ở Authentication › Users, sửa email trong `supabase/002-add-reviewer.sql` rồi chạy. Nên tắt cho đăng ký tự do.
 4. Mở `/#duyet` để duyệt góp ý và quản lý danh sách điểm. Danh sách lấy từ Supabase, lưu lại trên máy người dùng; máy chủ lỗi mà máy chưa có dữ liệu thì dùng `public/data/locations.json`.

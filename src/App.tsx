@@ -94,7 +94,9 @@ export default function App() {
       status: hoursStatus(p.hours, now),
       closingIn: minutesToClose(p.hours, now),
     }))
-    list.sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status] || (a.distance ?? 0) - (b.distance ?? 0))
+    // Chưa rõ giờ mà cũng không có số thì không có cách nào hỏi trước, nên xếp sau nơi gọi hỏi được
+    const rank = (p: NearbyPlace) => STATUS_RANK[p.status] + (p.status === 'unknown' && !p.phone ? 0.5 : 0)
+    list.sort((a, b) => rank(a) - rank(b) || (a.distance ?? 0) - (b.distance ?? 0))
     return list
   }, [places, position, now, approved])
 
