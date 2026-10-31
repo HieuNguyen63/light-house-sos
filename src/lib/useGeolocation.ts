@@ -22,13 +22,23 @@ export function useGeolocation(auto = true) {
     }
     stop()
     setStatus(s => (s === 'ok' ? s : 'locating'))
+    // Lấy nhanh vị trí sơ bộ để bản đồ tới đúng chỗ ngay, GPS chính xác cập nhật ngay sau đó
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setPosition(p => p ?? { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy })
+        setStatus('ok')
+      },
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 300_000, timeout: 5_000 },
+    )
     watchId.current = navigator.geolocation.watchPosition(
       pos => {
         setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy })
         setStatus('ok')
       },
       err => {
-        setStatus(err.code === err.PERMISSION_DENIED ? 'denied' : 'unavailable')
+        // Đã có vị trí mà GPS chập chờn thì giữ vị trí đó, không báo mất định vị
+        setStatus(s => (err.code === err.PERMISSION_DENIED ? 'denied' : s === 'ok' ? s : 'unavailable'))
       },
       { enableHighAccuracy: true, maximumAge: 10_000, timeout: 20_000 },
     )

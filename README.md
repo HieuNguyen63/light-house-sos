@@ -15,7 +15,7 @@ npm run preview    # xem bản build tại http://localhost:4173
 
 ## Thay dữ liệu cho địa phương của bạn
 
-1. Sửa `src/config.ts`: tên thành phố, toạ độ tâm, hotline địa phương.
+1. Sửa `src/config.ts`: khung bản đồ mặc định, bán kính gợi ý, hotline địa phương.
 2. Có Supabase thì thêm, sửa điểm ở trang `/#duyet`. Không dùng Supabase thì sửa `public/data/locations.json`. Mỗi điểm:
 
 ```json
@@ -49,7 +49,7 @@ npm run preview    # xem bản build tại http://localhost:4173
 
 ## Xem demo
 
-Thêm `?demo=22:30` vào link để giả lập giờ đó và đứng ở trung tâm thành phố, không cần định vị. Ví dụ `http://localhost:5173/?demo=02:30` để xem cảnh hầu hết tiệm đã off.
+App dùng được trên toàn quốc: mở lên là định vị người dùng. Chỉ gợi ý nơi trong bán kính 30 km; khu vực chưa có dữ liệu thì mở tìm kiếm Google Maps quanh vị trí đó. Thêm `?demo=22:30` vào link để giả lập giờ đó và đứng ở trung tâm Quy Nhơn, nơi có dữ liệu mẫu. Ví dụ `http://localhost:5173/?demo=02:30` để xem cảnh hầu hết tiệm đã off.
 
 Dữ liệu đi kèm repo hiện là **dữ liệu mẫu**, số điện thoại không có thật.
 

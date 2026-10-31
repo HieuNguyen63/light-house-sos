@@ -1,4 +1,3 @@
-import { APP } from '../config'
 import type { LatLng } from '../types'
 
 const MAX_LINK_LENGTH = 1000
@@ -54,21 +53,19 @@ export function parseMapLink(text: string): ParsedLink {
 
 /** Link Google Maps tự tạo từ địa chỉ chữ, không cần khoá API. */
 export function mapsSearchUrl(address: string): string {
-  const text = address.toLowerCase().includes(APP.city.name.toLowerCase()) ? address : `${address}, ${APP.city.name}`
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(text)}`
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
 }
 
-/** Tìm toạ độ từ địa chỉ qua Nominatim của OpenStreetMap. Chỉ gọi khi người dùng bấm Tìm, đúng quy định dùng dịch vụ này. */
-export async function findAddress(address: string): Promise<(LatLng & { label: string }) | null> {
-  const { lat, lng } = APP.city.center
-  const params = new URLSearchParams({
-    q: address.toLowerCase().includes(APP.city.name.toLowerCase()) ? address : `${address}, ${APP.city.name}`,
-    format: 'jsonv2',
-    limit: '1',
-    countrycodes: 'vn',
-    'accept-language': 'vi',
-    viewbox: `${lng - 0.3},${lat + 0.3},${lng + 0.3},${lat - 0.3}`,
-  })
+/** Tìm quanh một vị trí trên Google Maps, dùng khi khu vực chưa có dữ liệu trên app. */
+export function mapsNearbyUrl(query: string, near: LatLng | null): string {
+  if (!near) return mapsSearchUrl(`${query} gần đây`)
+  return `https://www.google.com/maps/search/${encodeURIComponent(query)}/@${near.lat},${near.lng},15z`
+}
+
+/** Tìm toạ độ từ địa chỉ qua Nominatim của OpenStreetMap, ưu tiên quanh người dùng. Chỉ gọi khi người dùng bấm Tìm, đúng quy định dùng dịch vụ này. */
+export async function findAddress(address: string, near?: LatLng): Promise<(LatLng & { label: string }) | null> {
+  const params = new URLSearchParams({ q: address, format: 'jsonv2', limit: '1', countrycodes: 'vn', 'accept-language': 'vi' })
+  if (near) params.set('viewbox', `${near.lng - 0.3},${near.lat + 0.3},${near.lng + 0.3},${near.lat - 0.3}`)
   const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const list = (await res.json()) as { lat: string; lon: string; display_name: string }[]

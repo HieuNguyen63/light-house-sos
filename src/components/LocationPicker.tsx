@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AttributionControl, MapContainer, useMap, useMapEvents } from 'react-leaflet'
 import { APP } from '../config'
-import { distanceMeters } from '../lib/geo'
 import { findAddress, mapsSearchUrl, parseMapLink } from '../lib/mapLink'
 import { Tiles } from './MapView'
 import { LocateIcon } from './icons'
@@ -47,7 +46,7 @@ export function LocationPicker({ value, onChange, user, address, onAddress, onMa
     setSearching(true)
     setMessage(null)
     try {
-      const found = await findAddress(address.trim())
+      const found = await findAddress(address.trim(), user ?? undefined)
       if (found) {
         jump(found, 'address')
         // Dịch vụ tìm địa chỉ có thể trả sai số nhà, nên phải cho người dùng đối chiếu
@@ -82,8 +81,6 @@ export function LocationPicker({ value, onChange, user, address, onAddress, onMa
       setMessage('Đã đặt ghim theo link. Kiểm tra lại, lệch thì kéo bản đồ cho đúng.')
     }
   }
-
-  const farAway = value && distanceMeters(value, APP.city.center) > APP.city.radiusM
 
   return (
     <fieldset className="space-y-3">
@@ -122,8 +119,8 @@ export function LocationPicker({ value, onChange, user, address, onAddress, onMa
         <p className="mb-1 text-sm font-semibold">Hoặc kéo bản đồ để ghim đúng chỗ</p>
         <div className="relative h-52 overflow-hidden rounded-2xl border border-line">
           <MapContainer
-            center={value ? [value.lat, value.lng] : [APP.city.center.lat, APP.city.center.lng]}
-            zoom={value ? 17 : APP.city.zoom}
+            center={value ? [value.lat, value.lng] : user ? [user.lat, user.lng] : [APP.map.center.lat, APP.map.center.lng]}
+            zoom={value ? 17 : user ? 15 : APP.map.zoom}
             zoomControl={false}
             attributionControl={false}
             touchZoom="center"
@@ -146,7 +143,6 @@ export function LocationPicker({ value, onChange, user, address, onAddress, onMa
       <p role="status" className={`text-sm ${value ? 'font-semibold text-ok' : 'text-muted'}`}>
         {value ? `Đã chọn vị trí: ${LOCATION_SOURCE_LABEL[value.source]}.` : 'Chưa chọn vị trí trên bản đồ.'}
       </p>
-      {farAway && <p className="text-sm font-semibold text-accent">Vị trí này nằm khá xa {APP.city.name}, bạn kiểm tra lại.</p>}
       {message && <p className="text-sm text-muted">{message}</p>}
     </fieldset>
   )

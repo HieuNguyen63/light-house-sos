@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { CATEGORIES, NEEDS, VEHICLE_LABEL, type Need } from '../config'
 import { blockSampleCall, formatDistance, formatPrice, mapsUrl, telHref, walkMinutes } from '../lib/geo'
+import { mapsNearbyUrl } from '../lib/mapLink'
 import type { GeoStatus } from '../lib/useGeolocation'
 import { CategoryIcon, ChatIcon, ChevronIcon, PhoneIcon, RouteIcon } from './icons'
 import { PlaceDetails, statusColor, statusText } from './PlaceCard'
-import type { FeedbackEntry, NearbyPlace } from '../types'
+import type { FeedbackEntry, LatLng, NearbyPlace } from '../types'
 
 const CARD = 'rounded-2xl border border-line bg-surface'
 
@@ -41,9 +42,9 @@ function LocationLine({ status, onLocate }: { status: GeoStatus; onLocate: () =>
   if (status === 'locating' || status === 'idle') return <p className="text-sm text-muted">Đang tìm vị trí của bạn…</p>
   return (
     <p className="flex items-center justify-between gap-2 rounded-xl border border-accent bg-accent-soft px-3 py-1 text-sm">
-      <span>Chưa có vị trí nên chưa tìm được nơi gần nhất.</span>
+      <span>{status === 'denied' ? 'App chưa được phép dùng vị trí. Hãy cho phép trong cài đặt trình duyệt rồi thử lại.' : 'Chưa lấy được vị trí của bạn.'}</span>
       <button type="button" onClick={onLocate} className="h-11 shrink-0 px-1 font-bold text-accent">
-        Bật định vị
+        Thử lại
       </button>
     </p>
   )
@@ -51,6 +52,7 @@ function LocationLine({ status, onLocate }: { status: GeoStatus; onLocate: () =>
 
 interface HomeProps {
   active: NearbyPlace[]
+  noNearData: boolean
   loading: boolean
   error: string | null
   onRetry: () => void
@@ -63,7 +65,7 @@ interface HomeProps {
 }
 
 /** Màn đầu chỉ hỏi một câu. Người đang hoảng không cần đọc bản đồ, chỉ cần nói mình gặp chuyện gì. */
-export function HomePanel({ active, loading, error, onRetry, geoStatus, onLocate, onNeed, onBrowse, onFeedback, onSos }: HomeProps) {
+export function HomePanel({ active, noNearData, loading, error, onRetry, geoStatus, onLocate, onNeed, onBrowse, onFeedback, onSos }: HomeProps) {
   return (
     <Shell onSos={onSos} scrollKey="home">
       <h2 className="text-[22px] leading-tight font-black">Bạn đang gặp chuyện gì?</h2>
@@ -89,13 +91,14 @@ export function HomePanel({ active, loading, error, onRetry, geoStatus, onLocate
               <span className="min-w-0">
                 <span className="block text-[15px] leading-tight font-bold">{need.label}</span>
                 <span className="mt-1 block text-[13px] leading-tight text-muted">
-                  {loading && active.length === 0 ? 'Đang tải…' : need.hotline ? `Gọi ${need.hotline.number}` : open ? `${open} nơi đang mở` : 'Chưa có nơi mở'}
+                  {loading && active.length === 0 ? 'Đang tải…' : need.hotline ? `Gọi ${need.hotline.number}` : open ? `${open} nơi đang mở` : 'Tìm trên bản đồ'}
                 </span>
               </span>
             </button>
           )
         })}
       </div>
+      {noNearData && <p className="mt-3 text-sm text-muted">Khu vực của bạn chưa có dữ liệu tiệm trên app. Chọn việc ở trên, app sẽ tìm giúp qua Google Maps.</p>}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button type="button" onClick={onBrowse} className="h-11 rounded-xl border border-line bg-surface text-sm font-semibold active:bg-soft">
           Xem tất cả điểm
@@ -111,6 +114,8 @@ export function HomePanel({ active, loading, error, onRetry, geoStatus, onLocate
 
 interface NeedProps {
   need: Need
+  position: LatLng | null
+  onAddPlace: () => void
   places: NearbyPlace[]
   offPlaces: NearbyPlace[]
   fallback: NearbyPlace[]
@@ -126,7 +131,7 @@ interface NeedProps {
 }
 
 /** Trả lời ngay: đây là nơi nên gọi. Không bắt người dùng so sánh, các nơi khác để phía dưới. */
-export function NeedPanel({ need, places, offPlaces, fallback, hero, loading, geoStatus, onLocate, onSelect, onBack, onSos, onFeedback, feedback }: NeedProps) {
+export function NeedPanel({ need, position, onAddPlace, places, offPlaces, fallback, hero, loading, geoStatus, onLocate, onSelect, onBack, onSos, onFeedback, feedback }: NeedProps) {
   const [showOff, setShowOff] = useState(false)
   const usingFallback = places.length === 0 && fallback.length > 0
   const others = (usingFallback ? fallback : places).filter(p => p.id !== hero?.id)
@@ -161,8 +166,29 @@ export function NeedPanel({ need, places, offPlaces, fallback, hero, loading, ge
 
       {!hero && !loading && (
         <div className={`${CARD} p-4`}>
-          <p className="font-bold">Giờ này chưa có nơi nào còn mở.</p>
-          <p className="mt-1 text-sm text-muted">Bấm SOS nếu bạn cần giúp ngay, hoặc gửi vị trí cho người thân từ màn SOS.</p>
+          <p className="font-bold">
+            {geoStatus === 'locating' || geoStatus === 'idle'
+              ? 'Đang tìm vị trí của bạn…'
+              : !position
+                ? 'Cần vị trí của bạn để tìm nơi gần nhất.'
+                : offPlaces.length
+                  ? 'Giờ này chưa có nơi nào gần bạn còn mở.'
+                  : 'Khu vực của bạn chưa có dữ liệu trên app.'}
+          </p>
+          <a
+            href={mapsNearbyUrl(need.mapsQuery, position)}
+            target="_blank"
+            rel="noopener"
+            className="mt-3 flex min-h-16 items-center justify-center gap-3 rounded-2xl bg-cta px-3 py-2 text-center text-lg font-black text-ink active:bg-cta-hover"
+          >
+            <RouteIcon size={22} />
+            Tìm {need.mapsQuery} trên Google Maps
+          </a>
+          {position && (
+            <button type="button" onClick={onAddPlace} className="mt-2 h-11 w-full rounded-xl border border-line text-sm font-semibold active:bg-soft">
+              Thêm nơi bạn biết
+            </button>
+          )}
         </div>
       )}
 
@@ -192,6 +218,13 @@ export function NeedPanel({ need, places, offPlaces, fallback, hero, loading, ge
             ))}
           </ul>
         </>
+      )}
+
+      {hero && (
+        <a href={mapsNearbyUrl(need.mapsQuery, position)} target="_blank" rel="noopener" className="mt-3 flex h-11 items-center justify-center gap-1.5 rounded-xl border border-line bg-surface text-sm font-semibold active:bg-soft">
+          <RouteIcon size={16} />
+          Tìm thêm trên Google Maps
+        </a>
       )}
 
       {offPlaces.length > 0 && (

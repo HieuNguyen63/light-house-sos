@@ -101,6 +101,11 @@ export default function App() {
   // Quá giờ đăng ký thì off: không hiện trên bản đồ, không nằm trong danh sách chính
   const active = useMemo(() => withDistance.filter(p => p.status !== 'closed'), [withDistance])
 
+  // Chỉ những nơi người dùng tới được mới gọi là gần. Chưa biết vị trí thì không đoán, vì dữ liệu nằm rải khắp nước
+  const isNear = useCallback((p: NearbyPlace) => p.distance != null && p.distance <= APP.nearbyRadiusM, [])
+  const nearActive = useMemo(() => active.filter(isNear), [active, isNear])
+  const hasNearData = useMemo(() => withDistance.some(isNear), [withDistance, isNear])
+
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: active.length }
     for (const p of active) c[p.category] = (c[p.category] ?? 0) + 1
@@ -111,22 +116,23 @@ export default function App() {
     // Theo thứ tự ưu tiên của việc đó: tai nạn thì xe cấp cứu trước, không để nhà thuốc đứng đầu chỉ vì gần hơn
     if (need) {
       const rank = (p: NearbyPlace) => need.categories.indexOf(p.category)
-      return active.filter(p => rank(p) >= 0).sort((a, b) => rank(a) - rank(b))
+      return nearActive.filter(p => rank(p) >= 0).sort((a, b) => rank(a) - rank(b))
     }
     return browsing && filter !== 'all' ? active.filter(p => p.category === filter) : active
-  }, [active, filter, need, browsing])
+  }, [active, nearActive, filter, need, browsing])
   const offPlaces = useMemo(() => {
     const closed = withDistance.filter(p => p.status === 'closed')
-    if (need) return closed.filter(p => need.categories.includes(p.category))
+    if (need) return closed.filter(p => isNear(p) && need.categories.includes(p.category))
     return filter === 'all' ? closed : closed.filter(p => p.category === filter)
-  }, [withDistance, filter, need])
+  }, [withDistance, filter, need, isNear])
   // Không còn nơi nào mở thì gợi ý nhóm dự phòng, để người dùng không đứng trước một màn trống
-  const fallback = useMemo(() => (need?.fallback && visible.length === 0 ? active.filter(p => p.category === need.fallback) : []), [need, visible, active])
+  const fallback = useMemo(() => (need?.fallback && visible.length === 0 ? nearActive.filter(p => p.category === need.fallback) : []), [need, visible, nearActive])
   const options = visible.length ? visible : fallback
   const hero = need ? options.find(p => p.id === selectedId) ?? options[0] ?? null : null
   const mapPlaces = need && visible.length === 0 ? fallback : visible
-  const nearest = useMemo(() => active.slice(0, 3), [active])
-  const hasSample = useMemo(() => places.some(p => p.sample), [places])
+  const nearest = useMemo(() => nearActive.slice(0, 3), [nearActive])
+  // Ở nơi chưa có dữ liệu thì không có số mẫu nào trước mắt, không cần cảnh báo
+  const hasSample = useMemo(() => (browsing || !position || hasNearData) && places.some(p => p.sample), [places, browsing, position, hasNearData])
 
   // Bay tới vị trí người dùng lần đầu tiên xác định được
   const flewOnce = useRef(false)
@@ -134,7 +140,7 @@ export default function App() {
     if (position && !flewOnce.current) {
       flewOnce.current = true
       // Ngay lúc mở app bản đồ còn đang đo kích thước, hiệu ứng bay làm Safari lệch tâm nên đặt thẳng
-      if (distanceMeters(position, APP.city.center) <= APP.city.radiusM) fly(position, 15, undefined, true)
+      fly(position, 15, undefined, true)
     }
   }, [position, fly])
 
@@ -144,8 +150,7 @@ export default function App() {
     if (!heroId) return
     const p = places.find(x => x.id === heroId)
     if (!p) return
-    const near = position && distanceMeters(position, APP.city.center) <= APP.city.radiusM
-    fly(p, 15, near ? position : undefined)
+    fly(p, 15, position ?? undefined)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [heroId])
 
@@ -205,7 +210,8 @@ export default function App() {
 
       {!need && !browsing && (
         <HomePanel
-          active={active}
+          active={nearActive}
+          noNearData={geoStatus === 'ok' && !loading && !hasNearData}
           loading={loading}
           error={error}
           onRetry={reload}
@@ -220,6 +226,8 @@ export default function App() {
       {need && (
         <NeedPanel
           need={need}
+          position={position}
+          onAddPlace={openGeneralFeedback}
           places={visible}
           offPlaces={offPlaces}
           fallback={fallback}

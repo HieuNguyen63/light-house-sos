@@ -106,7 +106,7 @@ export function SosSheet({ open, onClose, user, geoStatus, onLocate, nearest }: 
         <HotlineGrid items={HOTLINES} />
         {LOCAL_HOTLINES.length > 0 && (
           <>
-            <h3 className="mt-5 mb-2 text-sm font-bold uppercase tracking-wide text-muted">Hotline {APP.city.name}</h3>
+            <h3 className="mt-5 mb-2 text-sm font-bold uppercase tracking-wide text-muted">Hotline địa phương</h3>
             <HotlineGrid items={LOCAL_HOTLINES} />
           </>
         )}

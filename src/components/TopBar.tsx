@@ -16,7 +16,7 @@ export function TopBar({ online, hasSample }: Props) {
           <div className="min-w-0 leading-tight">
             <p className="text-[15px] font-bold">{APP.name}</p>
             <p className="truncate text-xs text-muted">
-              {APP.city.name} · {APP.tagline}
+              {APP.tagline}
             </p>
           </div>
         </div>

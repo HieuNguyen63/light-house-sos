@@ -1,19 +1,18 @@
 import type { CategoryId, VehicleId } from './types'
 
 /**
- * Cấu hình cho từng địa phương. Fork về thành phố khác chỉ cần sửa file này
- * và thay dữ liệu trong public/data/locations.json.
+ * Cấu hình chung của app. Dữ liệu điểm cứu hộ nằm trên Supabase, dự phòng ở public/data/locations.json.
  */
 export const APP = {
   name: 'Hải Đăng SOS',
   tagline: 'Cứu hộ gần bạn, 24/7',
-  city: {
-    name: 'Quy Nhơn',
-    center: { lat: 13.7765, lng: 109.2237 },
-    zoom: 14,
-    /** Người dùng ở ngoài bán kính này thì bản đồ giữ nguyên ở thành phố, không bay tới vị trí của họ. */
-    radiusM: 40_000,
+  /** Khung nhìn khi chưa biết người dùng ở đâu: cả nước. Có vị trí là bay tới vị trí đó. */
+  map: {
+    center: { lat: 16.2, lng: 106.5 },
+    zoom: 6,
   },
+  /** Chỉ gợi ý nơi trong bán kính này. Xa hơn thì người gặp nạn không tới được, không nên gọi là "gần bạn". */
+  nearbyRadiusM: 30_000,
   dataUrl: '/data/locations.json',
   tiles: {
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -32,14 +31,16 @@ export interface Need {
   /** Không còn nơi nào mở thì gợi ý nhóm này */
   fallback?: CategoryId
   hotline?: { number: string; label: string }
+  /** Từ khoá tìm trên Google Maps khi khu vực chưa có dữ liệu */
+  mapsQuery: string
 }
 
 /** Màn đầu hỏi theo việc người dùng đang gặp, không theo nhóm dữ liệu. */
 export const NEEDS: Need[] = [
-  { id: 'xe-hong', label: 'Xe hư, lủng lốp', icon: 'sua_xe', categories: ['sua_xe'], fallback: 'tinh_nguyen' },
-  { id: 'cap-cuu', label: 'Tai nạn, cấp cứu', icon: 'cap_cuu', categories: ['cap_cuu', 'y_te'], hotline: { number: '115', label: 'Cấp cứu' } },
-  { id: 'an-toan', label: 'Cần chỗ an toàn', icon: 'cong_an', categories: ['cong_an', 'tinh_nguyen'], hotline: { number: '113', label: 'Công an' } },
-  { id: 'het-xang', label: 'Hết xăng', icon: 'xang', categories: ['xang'], fallback: 'tinh_nguyen' },
+  { id: 'xe-hong', label: 'Xe hư, lủng lốp', icon: 'sua_xe', categories: ['sua_xe'], fallback: 'tinh_nguyen', mapsQuery: 'tiệm sửa xe' },
+  { id: 'cap-cuu', label: 'Tai nạn, cấp cứu', icon: 'cap_cuu', categories: ['cap_cuu', 'y_te'], hotline: { number: '115', label: 'Cấp cứu' }, mapsQuery: 'bệnh viện' },
+  { id: 'an-toan', label: 'Cần chỗ an toàn', icon: 'cong_an', categories: ['cong_an', 'tinh_nguyen'], hotline: { number: '113', label: 'Công an' }, mapsQuery: 'công an phường' },
+  { id: 'het-xang', label: 'Hết xăng', icon: 'xang', categories: ['xang'], fallback: 'tinh_nguyen', mapsQuery: 'cây xăng' },
 ]
 
 export const VEHICLE_LABEL: Record<VehicleId, string> = { xe_may: 'Xe máy', o_to: 'Ô tô' }

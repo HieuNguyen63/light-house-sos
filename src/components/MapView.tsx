@@ -18,7 +18,7 @@ interface Props {
 const PANEL_RATIO = 0.64
 
 export function MapView({ places, selectedId, onSelect, onClearSelect, user, flyTo }: Props) {
-  const { center, zoom } = APP.city
+  const { center, zoom } = APP.map
   return (
     <MapContainer
       center={[center.lat, center.lng]}
